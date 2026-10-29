@@ -1,0 +1,6 @@
+*.html linguist-generated=true
+*.Rmd linguist-detectable=true
+*.Rmd linguist-language=R
+*.dat linguist-generated=true
+*.out linguist-generated=true
+docs/*.pdf linguist-documentation=true
