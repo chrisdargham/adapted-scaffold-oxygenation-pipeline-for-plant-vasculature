@@ -1,0 +1,67 @@
+--- a/oxy_sim_mat.py	2026-10-28 16:28:23.776395384 +0200
++++ b/oxy_sim_mat.py	2026-10-28 16:28:23.788071390 +0200
+@@ -64,18 +64,17 @@
+ ------------------
+     python <this_file>.py --config sim_config.json --outdir results_dir
+ 
+-Batch sweeps & collation
+-------------------------
+-Use batch_runner_v2.py to:
+-- Sweep physiology (e.g., endothelium_like vs muscle_like), ΔP ∈ {20,40,60} mmHg,
+-  Hb ∈ {OFF, ON}, and P_wall scales.
+-- Write per-run metrics and aggregate MASTER_metrics.csv / SUMMARY_by_condition.csv.
++Batch sweeps
++------------
++Use o2_sweep.py (same folder) to sweep P_wall, Vmax and inlet pO2 and collect
++every run into MASTER_oxygenation_summary.csv.
+ 
+ Quality & reproducibility
+ -------------------------
+ - CFL guard on explicit diffusion; non-negativity clamps everywhere.
+ - Single-inlet/outlet per connected component fallback prevents zero-flow artefacts.
+-- Exchange clamp (default 0.9) avoids lumen over-drain; u_min applied consistently (speeds, advection, Dijkstra).
++- Semi-implicit wall exchange keeps tissue O2 between its previous value and the lumen value;
++  exchange clamp (default 0.9) avoids lumen over-drain; u_min applied consistently (speeds, advection, Dijkstra).
+ - Hb TOTAL↔pO₂ round-trip self-test at startup prints max relative error.
+ - Optional validation helpers (Krogh cylinder; 1-D slab) to sanity-check parameter regimes.
+ 
+@@ -87,8 +86,8 @@
+ 
+ Citation
+ --------
+-Please cite the associated manuscript (Dargham et al., YEAR) and foundational sources
+-(Michaelis-Menten kinetics; Krogh diffusion; Poiseuille flow; Hill saturation).
++Dargham C. Adapted scaffold oxygenation pipeline for plant vasculature (capstone), 2026.
++Foundational sources: Michaelis-Menten kinetics; Krogh diffusion; Poiseuille flow; Hill saturation.
+ 
+ Dependencies
+ ------------
+@@ -936,22 +935,25 @@
+     Veff[vessel_mask] = 0.0
+ 
+     MM = michaelis_menten(C[1:-1, 1:-1], Veff[1:-1, 1:-1], Km)
+-    perfusion_term = k_eff * (C_lumen_dissolved - C)
+ 
+     src = 0.0
+     if extra_source is not None:
+         src = extra_source[1:-1, 1:-1]
+ 
+-    C_new[1:-1, 1:-1] = (
++    # Exchange is treated semi-implicitly: (C_new - C*)/dt = k (C_lumen - C_new).
++    # This keeps C_new between C* and C_lumen for any dt*k, so tissue O2 can no longer
++    # overshoot the lumen (the explicit form did when dt*k and the diffusion weight summed > 1).
++    C_star = (
+         C[1:-1, 1:-1]
+         - MM * dt
+         + betax[1:-1, 1:-1] * (C[2:,  1:-1] - C[1:-1, 1:-1])
+         + betay[1:-1, 1:-1] * (C[1:-1, 2:  ] - C[1:-1, 1:-1])
+         + alphax[1:-1, 1:-1] * (C[2:,  1:-1] + C[:-2, 1:-1] - 2.0*C[1:-1, 1:-1])
+         + alphay[1:-1, 1:-1] * (C[1:-1, 2:  ] + C[1:-1, :-2] - 2.0*C[1:-1, 1:-1])
+-        + dt * perfusion_term[1:-1, 1:-1]
+         + dt * src
+     )
++    kdt = dt * k_eff[1:-1, 1:-1]
++    C_new[1:-1, 1:-1] = (C_star + kdt * C_lumen_dissolved[1:-1, 1:-1]) / (1.0 + kdt)
+ 
+     # Neumann boundaries
+     C_new[0,   :] = C_new[1,   :]

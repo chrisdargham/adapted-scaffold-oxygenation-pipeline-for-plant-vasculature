@@ -1,0 +1,29 @@
+stage,check,value,note
+NetFlowV2,segments,13615,
+NetFlowV2,nodes,13088,
+NetFlowV2,boundary nodes,45,1 inlet + outlets
+NetFlowV2,inlet pressure (mmHg),40.0,
+NetFlowV2,outlet pressure (mmHg),39.9955,
+NetFlowV2,inlet flow (nl/min),975.606,
+NetFlowV2,outlet flow (nl/min),975.611,should equal inlet flow
+NetFlowV2,max interior node imbalance (nl/min),0.00454,solver residual
+NetFlowV2,segments with non-zero flow (%),67.1,
+NetFlowV2,inflow leaving through the top 2 outlets (%),99.5,outlets 177 and 125 um from the inlet
+NetFlowV2,median |flow| / inlet flow,8.14e-07,
+NetFlowV2,zero-flow segments in blind-ending branches (%),90.7,
+NetFlowV2,independent loops (whole network),476,
+NetFlowV2,directed cycle in flow graph,False,"flow follows pressure, so there should be none"
+GreensV4,inlet / outlet pressure (mmHg),40 / 35,a different NetFlowV2 run from the one above
+GreensV4,inlet PO2 in input file (mmHg),0.0,should be 150; set_po2_in_network() bug
+GreensV4,active segments,13381,
+GreensV4,active segments with flow exactly 0,3614,
+GreensV4,nodes putrank.cpp can rank (%),8.3,
+GreensV4,degree-1 non-boundary nodes with outflow (fake inlets),725,-> 'wrong segment sequence in convect'
+GreensV4,nodes failing the 1% flow balance in convect.cpp,908,-> 'Flow conservation violation'
+GreensV4,directed cycle in flow graph,False,
+GreensV4,independent loops,476,
+GreensV4,vessel points nnv (est.),18424,segments split at 75 um
+GreensV4,tissue points nnt,98560,256 x 385 x 1
+GreensV4,"memory for gvv + al + mat (GB, est.)",5.43,float + float + double nnv x nnv (setuparrays2.cpp)
+GreensV4,"same for the 61,021-point run in the manuscript (GB)",59.6,
+GreensV4,qvsum is NaN in GreensLog.txt,True,

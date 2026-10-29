@@ -1,0 +1,3 @@
+run,tissue_grid,status,main_iterations,nan_in_log,wrong_segment_sequence_errors,flow_conservation_errors,last_qtsum,last_qvsum,last_g0,last_errvessel_p,min_errvessel_p,converged
+may_outlets_cleaned,256 x 385,return code stopped; stopped by hand after 8 main iterations (about 6 min each on 2 shared cores); converging at the same rate as the coarse-grid run,8,False,0,0,-318016.65625,338826.03125,-3832.173096,201334.671875,201334.671875,False
+may_outlets_cleaned_coarse,64 x 96,return code timeout; seconds 7000,99,False,0,0,-41590.195312,41487.132812,4.070272,3460.984131,2937.303223,False

@@ -1,0 +1,20 @@
+Solute parameters: PBS perfusate, no haemoglobin (rebuilt; May file lost)
+1 1 3	rungreens, g0method, linmethod
+2 2 100	nmaxvessel, nmaxtissue, nmax
+1.00E-04	errfac
+50	lowflowcrit
+38	P50 (unused, no carrier)
+3	Hill n (unused, no carrier)
+0.0	binding capacity of carrier (PBS: none)
+3.0E-05	O2 solubility in perfusate, cm3/cm3/mmHg (= 1.34e-3 mM/mmHg)
+1.	flow factor
+1   3	number of species, tissue parameters per species
+Solute 1 - oxygen
+  1	1   1	permsolute, diffsolute, oxygen
+  150.	pref
+  4.5e-10	D*alpha in tissue, cm3 O2/cm/s/mmHg (D = 1.5e-5 cm2/s, alpha = 3e-5)
+  5.0e-4	max consumption, cm3/cm3/s (as in tissrate.cpp.dat)
+  1.0	Pcrit, mmHg (as in tissrate.cpp.dat)
+  0.	unused
+  50.	g0 initial estimate
+  1.0	g0fac

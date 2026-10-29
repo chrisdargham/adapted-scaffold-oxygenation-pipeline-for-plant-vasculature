@@ -1,0 +1,9 @@
+# Python 3.10+; tested with Python 3.13 on Linux.
+numpy>=1.24
+scipy>=1.10
+scikit-image>=0.22,<0.28   # 0.28 removes binary_dilation / binary_erosion used by the oxygen solver
+matplotlib>=3.7
+pandas>=2.0
+pillow>=10.0
+h5py>=3.8                  # LeafVeinCNN .mat files are HDF5 (MATLAB v7.3)
+tqdm>=4.60                 # optional progress bar

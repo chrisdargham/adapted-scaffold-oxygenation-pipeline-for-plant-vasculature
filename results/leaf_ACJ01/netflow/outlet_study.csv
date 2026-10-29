@@ -1,0 +1,4 @@
+scenario,description,outlets,pressure_drop_mmHg,inlet_flow_nl_min,top2_outlet_share_pct,length_q_ge_1pct_of_inflow_pct,length_q_ge_0p1pct_of_inflow_pct,median_flow_over_inflow,directed_cycle
+A_may_all_outlets,44 edge terminals (May),44,0.0045,975.606,99.5,0.0,0.5,6.191024108312205e-07,False
+B_no_outlets_near_inlet,outlets > 1 mm from inlet,40,5.0,31956.133,91.6,4.8,17.9,0.00019073093217685053,False
+C_far_edge_outlets,bottom-edge outlets only,18,5.0,6738.739,59.4,38.3,56.5,0.017019126220657224,False

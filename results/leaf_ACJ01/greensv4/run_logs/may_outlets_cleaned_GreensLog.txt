@@ -1,0 +1,57 @@
+GreensLog.txt
+
+----- kmain = 1, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -1422537.000000, qvsum = 1894064.750000, g0 = -60752.992188
+Solute 1: errvessel_q = 1.203896, imaxerr = 2877
+Solute 1: errtissue_q = 24.993956, imaxerr = 42653
+Solute 1: errvessel_p = 7618492.000000, imaxerr = 11916
+Solute 1: errtissue_p = 1049518.000000, imaxerr = 107
+
+----- kmain = 2, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -994768.562500, qvsum = 1213299.750000, g0 = -29974.037109
+Solute 1: errvessel_q = 0.371063, imaxerr = 1106
+Solute 1: errtissue_q = 24.985323, imaxerr = 11792
+Solute 1: errvessel_p = 4420927.000000, imaxerr = 11659
+Solute 1: errtissue_p = 442024.218750, imaxerr = 24994
+
+----- kmain = 3, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -747015.125000, qvsum = 874786.125000, g0 = -19181.578125
+Solute 1: errvessel_q = 5.812665, imaxerr = 1226
+Solute 1: errtissue_q = 24.977095, imaxerr = 15232
+Solute 1: errvessel_p = 1539414.125000, imaxerr = 12243
+Solute 1: errtissue_p = 270080.906250, imaxerr = 36546
+
+----- kmain = 4, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -589429.750000, qvsum = 671302.437500, g0 = -12933.040039
+Solute 1: errvessel_q = 9.430319, imaxerr = 2001
+Solute 1: errtissue_q = 24.963469, imaxerr = 22182
+Solute 1: errvessel_p = 922690.875000, imaxerr = 11887
+Solute 1: errtissue_p = 147269.593750, imaxerr = 55059
+
+----- kmain = 5, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -483670.468750, qvsum = 538258.187500, g0 = -9059.453125
+Solute 1: errvessel_q = 5.993499, imaxerr = 1772
+Solute 1: errtissue_q = 24.945324, imaxerr = 26046
+Solute 1: errvessel_p = 592199.875000, imaxerr = 9935
+Solute 1: errtissue_p = 117462.632812, imaxerr = 122
+
+----- kmain = 6, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -410056.781250, qvsum = 448333.656250, g0 = -6568.615723
+Solute 1: errvessel_q = 4.004965, imaxerr = 2005
+Solute 1: errtissue_q = 24.910549, imaxerr = 26816
+Solute 1: errvessel_p = 400448.843750, imaxerr = 9160
+Solute 1: errtissue_p = 120331.320312, imaxerr = 90
+
+----- kmain = 7, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -358504.656250, qvsum = 385149.968750, g0 = -4938.846191
+Solute 1: errvessel_q = 2.371662, imaxerr = 2638
+Solute 1: errtissue_q = 24.821939, imaxerr = 81355
+Solute 1: errvessel_p = 289692.656250, imaxerr = 8473
+Solute 1: errtissue_p = 121447.726562, imaxerr = 2
+
+----- kmain = 8, kvessel = 2, ktissue = 2 -----
+Solute 1: qtsum = -318016.656250, qvsum = 338826.031250, g0 = -3832.173096
+Solute 1: errvessel_q = 3.830329, imaxerr = 2638
+Solute 1: errtissue_q = 24.768602, imaxerr = 82519
+Solute 1: errvessel_p = 201334.671875, imaxerr = 6454
+Solute 1: errtissue_p = 115494.664062, imaxerr = 1

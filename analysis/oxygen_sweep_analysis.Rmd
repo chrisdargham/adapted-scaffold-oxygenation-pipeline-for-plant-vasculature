@@ -1,0 +1,225 @@
+---
+title: "Oxygen sweep on the real leaf (ACJ01)"
+author: "Chris Dargham"
+output:
+  github_document: default
+  html_document:
+    toc: true
+params:
+  sweep: "results/leaf_ACJ01/oxygen_sweep/MASTER_oxygenation_summary.csv"
+  before_fix: "results/leaf_ACJ01/oxygen_sweep_before_fix/MASTER_oxygenation_summary.csv"
+  may_report: "data/leaf_ACJ01/may_sweep_report_values.csv"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 7, fig.height = 4, fig.path = "figures/")
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+theme_set(theme_bw())
+sci <- function(x) formatC(x, format = "e", digits = 0)   # 1e-08 instead of 0.000
+```
+
+# 1. Aim
+
+The oxygen screening solver was run on the real leaf for every combination of:
+
+- `P_wall`: how easily oxygen crosses the vessel wall (m/s), 4 levels.
+- `Vmax`: how fast the tissue consumes oxygen (mM/s), 3 levels.
+- `inlet_mmHg`: oxygen entering the network (mmHg), 2 levels.
+
+The leaf geometry was rebuilt from the saved NetFlowV2 network, because the
+original LeafVeinCNN file was lost (`src/reconstruct/network_to_mat.py`). All
+other settings are the May settings.
+
+Questions:
+
+1. Is every run physically possible?
+2. Does the rebuilt leaf give the same answers as the May sweep report?
+3. Which parameter controls tissue oxygen most?
+4. What did the wall-exchange fix change on the real leaf?
+
+# 2. Load and check
+
+```{r load}
+sweep <- read_csv(params$sweep)
+cat("Runs:", nrow(sweep), "\n")
+sweep %>% count(P_wall_m_s, name = "runs") %>%
+  mutate(P_wall_m_s = sci(P_wall_m_s)) %>% knitr::kable()
+```
+
+Tissue has no oxygen source other than the vessels, so tissue pO2 should never
+be above the inlet value.
+
+```{r checks}
+checks <- sweep %>% summarise(
+  runs = n(),
+  missing_values = sum(is.na(tissue_pO2_median_mmHg)),
+  tissue_above_inlet = sum(tissue_pO2_max_mmHg > inlet_mmHg + 0.5),
+  flagged_by_solver = sum(nonphysical_tissue_gt_inlet))
+knitr::kable(checks)
+```
+
+# 3. Comparison with the May sweep report
+
+The May sweep table was lost, but the May report still shows the percentage of
+tissue at or above 15 mmHg for its 12 runs, and two group medians. The same 12
+conditions are inside the new sweep.
+
+```{r may-compare}
+may <- read_csv(params$may_report, comment = "#")
+
+frac <- may %>% filter(quantity == "frac_tissue_ge_15mmHg_pct") %>%
+  mutate(across(c(P_wall_m_s, Vmax_mM_s, inlet_mmHg), as.numeric)) %>%
+  select(P_wall_m_s, Vmax_mM_s, inlet_mmHg, may_report = value) %>%
+  inner_join(sweep %>% select(P_wall_m_s, Vmax_mM_s, inlet_mmHg,
+                              rebuilt_leaf = frac_tissue_ge_15mmHg_pct),
+             by = c("P_wall_m_s", "Vmax_mM_s", "inlet_mmHg")) %>%
+  mutate(difference = rebuilt_leaf - may_report)
+
+knitr::kable(frac %>% mutate(P_wall_m_s = sci(P_wall_m_s), Vmax_mM_s = sci(Vmax_mM_s)),
+             digits = 1, caption = "Tissue >= 15 mmHg (%)")
+```
+
+```{r may-medians}
+group_medians <- sweep %>%
+  filter(P_wall_m_s %in% c(1e-8, 1e-6)) %>%
+  group_by(P_wall_m_s) %>%
+  summarise(rebuilt_leaf = median(tissue_pO2_median_mmHg)) %>%
+  mutate(may_report = c(4.02, 104))
+knitr::kable(group_medians %>% mutate(P_wall_m_s = sci(P_wall_m_s)), digits = 2,
+             caption = "Median of the run medians of tissue pO2 (mmHg), 6 runs per P_wall")
+```
+
+```{r may-summary, include = FALSE}
+lo <- frac %>% filter(P_wall_m_s == 1e-8)
+hi <- frac %>% filter(P_wall_m_s == 1e-6)
+worst <- frac %>% slice_max(abs(difference), n = 1)
+```
+
+The regime result is the same. At `P_wall` = 1e-8, `r if (max(lo$rebuilt_leaf) < 0.05) "no tissue reaches 15 mmHg in any condition" else paste0("at most ", round(max(lo$rebuilt_leaf), 1), "% of tissue reaches 15 mmHg")`
+(May report: at most `r max(lo$may_report)`%). At 1e-6, at least
+`r round(min(hi$rebuilt_leaf), 1)`% does (May report: at least
+`r min(hi$may_report)`%). The largest difference is
+`r round(abs(worst$difference), 1)` percentage points, at `Vmax` =
+`r sci(worst$Vmax_mM_s)` and inlet `r worst$inlet_mmHg` mmHg, the condition
+with the highest consumption and the lowest supply.
+
+The rebuilt leaf gives less oxygen than the May report: the group medians are
+`r round(group_medians$rebuilt_leaf[1], 1)` vs 4.02 mmHg and
+`r round(group_medians$rebuilt_leaf[2], 1)` vs 104 mmHg. The likely reason is
+geometry. The rebuilt veins are straight segments between nodes, with the
+NetFlowV2 diameters (capped at 150 µm), not the original CNN outline, so vein
+area and spacing differ. The rebuilt leaf therefore reproduces the May
+conclusions, not the May numbers.
+
+# 4. Effect of each parameter
+
+```{r median-po2, fig.height = 4.5}
+ggplot(sweep, aes(P_wall_m_s, tissue_pO2_median_mmHg,
+                  colour = sci(Vmax_mM_s), group = Vmax_mM_s)) +
+  geom_line() + geom_point() +
+  geom_hline(aes(yintercept = inlet_mmHg), linetype = "dashed") +
+  geom_hline(yintercept = 15, linetype = "dotted", colour = "grey40") +
+  scale_x_log10() +
+  facet_wrap(~ paste("Inlet", inlet_mmHg, "mmHg")) +
+  labs(x = "P_wall (m/s, log scale)", y = "Median tissue pO2 (mmHg)",
+       colour = "Vmax (mM/s)",
+       title = "Real leaf: median tissue oxygen",
+       subtitle = "dashed = inlet pO2, dotted = 15 mmHg")
+```
+
+To compare the parameters fairly, tissue pO2 is divided by the inlet pO2. For
+each parameter, the mean of this ratio is taken at each of its levels
+(averaging over the other two). The spread between its lowest and highest level
+is its main effect.
+
+```{r main-effects}
+sweep <- sweep %>% mutate(ratio = tissue_pO2_median_mmHg / inlet_mmHg)
+main_effect <- function(df, var) {
+  df %>% group_by(level = .data[[var]]) %>%
+    summarise(mean_ratio = mean(ratio), .groups = "drop") %>%
+    mutate(parameter = var)
+}
+effects <- bind_rows(main_effect(sweep, "P_wall_m_s"),
+                     main_effect(sweep, "Vmax_mM_s"),
+                     main_effect(sweep, "inlet_mmHg"))
+knitr::kable(effects %>% transmute(parameter,
+                                   level = ifelse(parameter == "inlet_mmHg", format(level), sci(level)),
+                                   mean_ratio), digits = 3)
+spread <- effects %>% group_by(parameter) %>%
+  summarise(spread = max(mean_ratio) - min(mean_ratio)) %>% arrange(desc(spread))
+knitr::kable(spread, digits = 3)
+```
+
+`r spread$parameter[1]` has the largest effect (spread
+`r round(spread$spread[1], 2)`), then `r spread$parameter[2]`
+(`r round(spread$spread[2], 2)`), then `r spread$parameter[3]`
+(`r round(spread$spread[3], 2)`). The tested ranges are not evenly spaced, so
+this ranks the parameters over the ranges tested, not per unit change.
+
+# 5. The wall-exchange fix on the real leaf
+
+The May solver updated wall exchange explicitly, in the same step as diffusion.
+When `dt * k` was large, the update overshot and tissue oxygen went above the
+inlet. The current solver treats exchange semi-implicitly
+(`src/solver/oxy_sim_mat.py`, `compute_step`).
+
+The runs at `P_wall` = 1e-6 and 1e-4 were repeated with the May solver.
+
+```{r fix}
+before <- read_csv(params$before_fix) %>%
+  select(run_id, P_wall_m_s, Vmax_mM_s, inlet_mmHg,
+         median_before = tissue_pO2_median_mmHg, max_before = tissue_pO2_max_mmHg)
+fix <- before %>%
+  inner_join(sweep %>% select(run_id, median_after = tissue_pO2_median_mmHg,
+                              max_after = tissue_pO2_max_mmHg), by = "run_id") %>%
+  mutate(above_inlet_before = max_before > inlet_mmHg + 0.5,
+         above_inlet_after = max_after > inlet_mmHg + 0.5)
+fix_table <- fix %>% group_by(P_wall_m_s) %>%
+  summarise(runs = n(),
+            max_change_in_median_mmHg = max(abs(median_after - median_before)),
+            highest_median_before = max(median_before),
+            highest_max_before = max(max_before),
+            runs_above_inlet_before = sum(above_inlet_before),
+            runs_above_inlet_after = sum(above_inlet_after))
+knitr::kable(fix_table %>% mutate(P_wall_m_s = sci(P_wall_m_s)), digits = 2)
+```
+
+```{r fix-plot, fig.height = 3.5}
+ggplot(fix, aes(median_before, median_after, colour = sci(P_wall_m_s),
+                shape = factor(inlet_mmHg))) +
+  geom_abline(linetype = "dashed") + geom_point(size = 2.5) +
+  labs(x = "Median tissue pO2, May solver (mmHg)", y = "Fixed solver (mmHg)",
+       colour = "P_wall (m/s)", shape = "Inlet (mmHg)")
+```
+
+```{r fix-summary, include = FALSE}
+f6 <- fix_table %>% filter(P_wall_m_s == 1e-6)
+f4 <- fix_table %>% filter(P_wall_m_s == 1e-4)
+```
+
+At `P_wall` = 1e-6, the highest level in the May report, the fix changes the
+median tissue pO2 by at most `r signif(f6$max_change_in_median_mmHg, 2)` mmHg,
+so the May report's conclusions stand. At 1e-4, the May solver puts tissue
+oxygen above the inlet in `r f4$runs_above_inlet_before` of `r f4$runs` runs,
+with a maximum of `r round(f4$highest_max_before)` mmHg, which is physically
+impossible. The fixed solver does so in `r f4$runs_above_inlet_after` runs.
+
+# 6. What this does and does not show
+
+- The solver gives bounded, consistent answers on the real leaf geometry, and
+  the rebuilt leaf reproduces the May sweep conclusions.
+- Wall permeability decides whether the tissue is oxygenated. It has not been
+  measured for decellularised leaves, so the answer is conditional on it.
+- No result here is a measurement or a viability prediction. There is no
+  experimental comparison.
+- The solver builds its own flow field on the vein skeleton, with one inlet and
+  one outlet. It does not use the NetFlowV2 flows from the outlet study.
+
+```{r session}
+sessionInfo()
+```

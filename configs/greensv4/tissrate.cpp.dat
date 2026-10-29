@@ -1,0 +1,13 @@
+// tissrate.cpp.dat — O2 consumption, Michaelis-Menten kinetics
+// M0 = 5e-4 ml O2/ml/s: HUVEC monolayer, Leighton & Bhatt, Integr Biol 2022
+// Pcrit = 1.0 mmHg: half-saturation PO2, Secomb et al., Ann Biomed Eng 2004
+// mtiss[1]  = net O2 production rate (negative = consumption)
+// mptiss[1] = d(mtiss[1])/d(p[1])
+{
+    float M0 = 5.0e-4;    // ml O2 / ml tissue / s
+    float Pcrit = 1.0;    // mmHg
+    float po2 = p[1];
+    if(po2 < 0.) po2 = 0.;
+    mtiss[1]  = -M0 * po2 / (po2 + Pcrit);
+    mptiss[1] = -M0 * Pcrit / ((po2 + Pcrit) * (po2 + Pcrit));
+}

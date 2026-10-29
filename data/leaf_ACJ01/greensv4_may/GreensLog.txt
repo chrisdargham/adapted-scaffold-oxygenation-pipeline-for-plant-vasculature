@@ -1,0 +1,8 @@
+GreensLog.txt
+
+----- kmain = 1, kvessel = 1, ktissue = 3 -----
+Solute 1: qtsum = 0.000000, qvsum = nan, g0 = nan
+Solute 1: errvessel_q = 0.000000, imaxerr = 13608
+Solute 1: errtissue_q = 0.000000, imaxerr = 1
+Solute 1: errvessel_p = 2066026401113809077927936.000000, imaxerr = 12741
+Solute 1: errtissue_p = 0.000000, imaxerr = 0

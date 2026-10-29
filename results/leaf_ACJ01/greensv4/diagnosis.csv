@@ -1,0 +1,5 @@
+network,active_segments,segments_flow_exactly_0,independent_loops,connected_pieces,nodes_putrank_can_rank_pct,fake_inlets,nodes_failing_1pct_balance,directed_cycle
+"May GreensV4 input (May outlets, 40 -> 35 mmHg): as given",13381,3614,476,2,8.3,725,908,False
+"May GreensV4 input (May outlets, 40 -> 35 mmHg): cleaned",8307,0,468,1,100.0,0,0,False
+Far-edge outlets (outlet study C): as given,13381,5149,476,2,2.7,302,56,False
+Far-edge outlets (outlet study C): cleaned,8153,0,465,1,100.0,0,0,False

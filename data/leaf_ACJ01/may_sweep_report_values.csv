@@ -1,0 +1,21 @@
+# Values read from Oxygenation_Sweep_Report.pdf (6 May 2026), the R Markdown report of the
+# May real-leaf sweep. The MASTER_oxygenation_summary.csv it used was lost; these are the
+# only numbers that survive. 12 runs: P_wall 1e-8 and 1e-6 m/s, Vmax 1e-5/1e-4/1e-3 mM/s,
+# inlet 80 and 150 mmHg. Source: Figure 3 (heatmap) and the summary/effect tables.
+quantity,P_wall_m_s,Vmax_mM_s,inlet_mmHg,value,source
+frac_tissue_ge_15mmHg_pct,1e-08,1e-05,80,0,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-06,1e-05,80,100,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-08,1e-04,80,0,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-06,1e-04,80,100,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-08,1e-03,80,0,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-06,1e-03,80,99.4,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-08,1e-05,150,0.1,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-06,1e-05,150,100,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-08,1e-04,150,0,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-06,1e-04,150,100,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-08,1e-03,150,0,Figure 3
+frac_tissue_ge_15mmHg_pct,1e-06,1e-03,150,100,Figure 3
+min_of_median_tissue_pO2_mmHg,all,all,all,0.910,summary table
+max_of_median_tissue_pO2_mmHg,all,all,all,149,summary table
+median_of_median_tissue_pO2_mmHg,1e-08,all,all,4.02,effect table
+median_of_median_tissue_pO2_mmHg,1e-06,all,all,104,effect table

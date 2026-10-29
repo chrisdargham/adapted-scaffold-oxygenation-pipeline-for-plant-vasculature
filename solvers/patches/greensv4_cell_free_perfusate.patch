@@ -1,0 +1,17 @@
+diff --git a/initgreens.cpp b/initgreens.cpp
+index c28821b..52b1299 100644
+--- a/initgreens.cpp
++++ b/initgreens.cpp
+@@ -40,7 +40,11 @@ void initgreens()
+ 			pv[i][isp] = 0.;
+ 			if (permsolute[isp] == 1) {
+ 				if (oxygen[isp] == 1) {
+-					qv[i][isp] = -qtsum[isp] * ds[mainseg[i]] * qq[mainseg[i]] * hd[mainseg[i]] / tlengthqhd;
++					// Patch (Dargham 2026): with a cell-free perfusate hd = 0 everywhere, so tlengthqhd = 0
++					// and the original line gives 0/0 = NaN. Fall back to the flow-weighted guess used below
++					// for non-oxygen solutes. Only the starting guess changes; the solved equations do not.
++					if (tlengthqhd > 0.) qv[i][isp] = -qtsum[isp] * ds[mainseg[i]] * qq[mainseg[i]] * hd[mainseg[i]] / tlengthqhd;
++					else qv[i][isp] = -qtsum[isp] * ds[mainseg[i]] * qq[mainseg[i]] / tlengthq;
+ 					if (lowflow[mainseg[i]] == 1) qv[i][isp] = 0.;  //low q*hd
+ 				}
+ 				else qv[i][isp] = -qtsum[isp] * ds[mainseg[i]] * qq[mainseg[i]] / tlengthq;
