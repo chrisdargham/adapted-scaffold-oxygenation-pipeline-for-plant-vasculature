@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Solver sources and binaries (rebuilt by solvers/build_solvers.sh)
+solvers/NetFlowV2/
+solvers/GreensV4/
+solvers/netflow
+solvers/greens
+*.exe
+
+# Generated inputs (rebuilt in seconds)
+data/leaf_ACJ01/ACJ01_rebuilt.mat
+data/demo/synthetic_leaf.mat
+
+# Per-run solver folders: keep the summary tables, not every array and log
+results/**/runs/
+results/**/logs/
+results/**/configs/
+results/demo/
+results/*.log
+*.npy
+*.npz
+*.ps
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# System files
+.DS_Store
+Thumbs.db
