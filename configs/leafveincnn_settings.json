@@ -1,0 +1,13 @@
+{
+  "_note": "Stage 1 settings: LeafVeinCNN v2.14 vein segmentation of the cleared-leaf image. The LeafVeinCNN output (.mat) for this image was lost; these are the settings recorded in the May 2026 project README. LeafVeinCNN is external MATLAB software and is not run by this repository.",
+  "software": "LeafVeinCNN v2.14 (Fricker, Blonder, Xu 2021), doi:10.5281/zenodo.8272938",
+  "dataset": "Blonder et al. (2025) CHAMBASA leaf venation image dataset, doi:10.5281/zenodo.15092829",
+  "image": "ACJ01-T343-B1S-CLAHE",
+  "micron_per_pixel": 9.62,
+  "rescale_factor": 2,
+  "cnn_mode": "random",
+  "ensemble_size": 3,
+  "mat_fields_used_downstream": ["bwFullWidth", "skeleton", "MicronPerPixel", "widthCalibrated", "edgelistCenter"],
+  "output_image_size_px": {"rows": 2000, "cols": 1333,
+    "_source": "box dimensions in data/leaf_ACJ01/netflow_may/Network.dat (12813.84 x 19230.38 um) divided by 9.62 um/px, plus 1"}
+}

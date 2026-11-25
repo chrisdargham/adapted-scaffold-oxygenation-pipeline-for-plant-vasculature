@@ -1,0 +1,43 @@
+{
+  "_note": "Stage 2 record: how the May NetFlowV2 input data/leaf_ACJ01/netflow_may/Network.dat was made. The exact May command was not saved. 'verified_from_kept_file' lists values read back from that file; 'not_recorded' lists settings whose May values are unknown. Rerunning stage 2 needs the lost LeafVeinCNN .mat, so these values cannot be checked further.",
+
+  "steps": [
+    "1. src/preprocessing/prepare_network.py (calls leafveincnn_to_netflow.py) -> network_ready.dat",
+    "2. src/preprocessing/patch_netflow_boundary_pressures.py --inlet-node 1836 --pin 40.0 --pout 39.9955 -> data/leaf_ACJ01/netflow_may/Network.dat"
+  ],
+
+  "verified_from_kept_file": {
+    "resample_step_um": 75.0,
+    "diameter_cap_um": 150.0,
+    "segments_at_diameter_cap": 708,
+    "min_diameter_um": 4.81,
+    "outer_bound_lb_um": 100.0,
+    "box_z_um": 20.0,
+    "tissue_grid": [256, 385, 1],
+    "tissue_grid_spacing_um": 50.0,
+    "segments_total": 13615,
+    "segments_active_type5": 13586,
+    "segments_removed_type0": 29,
+    "nodes": 13088,
+    "inlet_node": 1836,
+    "inlet_xy_um": [3241.94, 19114.94],
+    "inlet_row_col_px": [12, 337],
+    "inlet_distance_to_image_edge_um": 115.4,
+    "inlet_pressure_mmHg": 40.0,
+    "outlet_count": 44,
+    "outlet_pressure_mmHg": 39.9955,
+    "outlet_max_distance_to_image_edge_um": 548.3,
+    "boundary_po2_column_mmHg": 0.0,
+    "rheology": "data/leaf_ACJ01/netflow_may/RheolParams.dat (constant viscosity 0.7 cP, no haematocrit)",
+    "line_endings": "CRLF (written on Windows)"
+  },
+
+  "not_recorded": {
+    "inlet_selection": "unknown whether --inlet-rc or --auto-inlet was used; the inlet sits at row 12, col 337 (top edge), not at the repository default --inlet-rc 1400,5",
+    "outlet_pressure_before_patch_mmHg": "unknown; overwritten by step 2",
+    "boundary_margin_um": "unknown; one outlet is 548 um from the edge, more than the 250 um default, possibly moved inward by the degree-1 repair",
+    "lumen_fraction": "unknown",
+    "snap_px": "unknown",
+    "min_length_um": "unknown"
+  }
+}

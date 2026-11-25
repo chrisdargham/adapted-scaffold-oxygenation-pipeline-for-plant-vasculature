@@ -27,7 +27,7 @@ Example PowerShell
 ------------------
 python .\src\solver\o2_sweep.py `
   --solver .\src\solver\oxy_sim_mat.py `
-  --base-config .\configs\sim_configuration.json `
+  --base-config .\configs\leaf_ACJ01_may_settings.json `
   --output-root .\results\sweep `
   --mode full
 
