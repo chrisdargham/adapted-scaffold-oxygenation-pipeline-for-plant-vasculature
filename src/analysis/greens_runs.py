@@ -191,7 +191,9 @@ def summarise():
             last_qtsum=last.get("qtsum"), last_qvsum=last.get("qvsum"), last_g0=last.get("g0"),
             last_errvessel_p=last.get("errvessel_p"),
             min_errvessel_p=it["errvessel_p"].min() if "errvessel_p" in it else None,
-            converged=(d / "Current" / "TissueLevels001.out").exists()))
+            # GreensV4 also writes TissueLevels001.out when it stops at its iteration
+            # limit without converging, so check its "not converged" warning too.
+            converged=(d / "Current" / "TissueLevels001.out").exists() and "not converged" not in stdout))
         shutil.copy(log, OUT / "run_logs" / f"{d.name}_GreensLog.txt")
         if stdout:
             (OUT / "run_logs" / f"{d.name}_stdout_last200.txt").write_text(

@@ -1449,11 +1449,17 @@ def run_pipeline(args):
             L = 300e-6
             x_s, C_s = solve_steady_slab(params.D, params.Vmax, params.Km, C0, L, nx=400)
             xcrit = penetration_depth_from_threshold(x_s, C_s, thr)
-            print(f"[VERIFY] Slab depth to {thr:.3f} mM ≈ {xcrit*1e6:.1f} µm")
+            if xcrit >= x_s[-1]:
+                print(f"[VERIFY] Slab: O2 stays above {thr:.3f} mM over the whole {L*1e6:.0f} µm slab")
+            else:
+                print(f"[VERIFY] Slab depth to {thr:.3f} mM ≈ {xcrit*1e6:.1f} µm")
             a, Rt = 3e-6, 50e-6
             r_k, C_k = solve_krogh_mm_radial(params.D, params.Vmax, params.Km, C0, a, Rt, nr=400)
             rcrit = penetration_depth_from_threshold(r_k, C_k, thr)
-            print(f"[VERIFY] Krogh depth from wall to {thr:.3f} mM ≈ {(rcrit - a)*1e6:.1f} µm")
+            if rcrit >= r_k[-1]:
+                print(f"[VERIFY] Krogh: O2 stays above {thr:.3f} mM out to Rt = {Rt*1e6:.0f} µm")
+            else:
+                print(f"[VERIFY] Krogh depth from wall to {thr:.3f} mM ≈ {(rcrit - a)*1e6:.1f} µm")
             outdir_v = Path(args.outdir if args.outdir != "auto" else f"{Path(source_name).stem}_results")
             outdir_v.mkdir(parents=True, exist_ok=True)
             import matplotlib.pyplot as plt
@@ -1665,11 +1671,14 @@ def run_pipeline(args):
     txt_lines.append(f"% tissue within 200 μm: {twohund:5.1f}%")
     # Approximate oxygenated distances where PbtO2 ≥ thresholds (using alpha conversion)
     alpha = params.alpha_mM_per_mmHg
+    # Fixed Nov 2026: this used to return the distance at which the distance CDF
+    # reaches 100%, which ignores oxygen (both thresholds always gave the same number).
+    _tissue = ~vessel_mask
+    _dist_um = distance_transform_edt(_tissue, sampling=(params.dx, params.dy)) * 1e6
     def max_oxygenated_distance(mmHg):
-        # crude readout: distance where median tissue concentration falls below threshold
-        # we approximate by picking the distance at which CDF reaches 100% of tissue — not exact,
-        # but kept here for continuity with your text summary.
-        return float(np.interp(100.0, cdf["cdf_pct"], cdf["bins_um"]))
+        """Largest distance to the nearest vessel among tissue pixels at or above mmHg."""
+        ok = _tissue & (C_final >= alpha * mmHg)
+        return float(_dist_um[ok].max()) if np.any(ok) else 0.0
     txt_lines.append(f"Max oxygenated distance @15 mmHg: {max_oxygenated_distance(15):.1f} μm")
     txt_lines.append(f"Max oxygenated distance @20 mmHg: {max_oxygenated_distance(20):.1f} μm")
     txt_lines.append("")
@@ -1724,7 +1733,7 @@ def run_pipeline(args):
 
 def build_argparser():
     p = argparse.ArgumentParser(description="Oxygen diffusion + hemodynamics (JSON‑driven).")
-    p.add_argument("--config", type=str, default=None, help="Path to JSON config (optional; falls back to sim_config.json or sim_config_patched.json).")
+    p.add_argument("--config", type=str, default=None, help="Path to JSON config (optional; defaults to sim_config.json in the current folder).")
     p.add_argument("--outdir", type=str, default=None, help="Override output directory. If not set, use JSON 'outdir'.")
     return p
 

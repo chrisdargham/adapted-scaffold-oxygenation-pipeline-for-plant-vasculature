@@ -34,6 +34,20 @@ resample-step   = 25 µm
 inlet-po2       = 150 mmHg   (air-equilibrated PBS, Gershlak 2017)
 outlet-po2      = 40 mmHg    (venous lower bound)
 keff-values     = 1, 10, 100 µm/s (cellulose wall sweep)
+
+SOLVER FOLDERS
+--------------
+--netflow-dir must contain RheolParams.dat and ContourParams.dat
+  (see data/leaf_ACJ01/netflow_may/). Network.dat is written by this script.
+--greens-dir must contain SoluteParams.dat, ContourParams.dat, tissrate.cpp.dat
+  (configs/greensv4/) and VaryParams.dat (data/leaf_ACJ01/greensv4_may/Varyparams.dat).
+  Network.dat and IntravascRes.dat are written by this script.
+Each solver's Current/ folder is deleted before it runs. Solver stdout is saved
+next to the results; collect_results.py reads GreensV4's to report convergence.
+
+GreensV4 runs here on the network as NetFlowV2 returns it. On the real leaf that
+fails (zero-flow segments and dead ends, docs/errata.md point 1): apply the
+cleanup in src/analysis/greens_runs.py first.
 """
 
 import argparse
@@ -86,13 +100,25 @@ def build_parser():
 
 # ── Helpers ───────────────────────────────────────────────────────────────
 
-def run(cmd, cwd=None, dry_run=False):
+def run(cmd, cwd=None, dry_run=False, log_path=None):
+    """Run a command. With log_path, stdout and stderr are also saved to that file."""
+    cmd = list(cmd)
+    # A bare executable name is looked up on PATH, not in cwd, on Linux/macOS:
+    # use the solver folder's copy if there is one.
+    if cwd is not None and (Path(cwd) / str(cmd[0])).exists():
+        cmd[0] = str((Path(cwd) / str(cmd[0])).resolve())
     cmd_str = " ".join(str(c) for c in cmd)
     print(f"\n  >> {cmd_str}")
     if dry_run:
         return 0
-    r = subprocess.run(cmd, cwd=str(cwd) if cwd else None,
-                       capture_output=False, text=True)
+    if log_path is None:
+        r = subprocess.run(cmd, cwd=str(cwd) if cwd else None, text=True)
+    else:
+        r = subprocess.run(cmd, cwd=str(cwd) if cwd else None, text=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, errors="replace")
+        print(r.stdout)
+        Path(log_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(log_path).write_text(r.stdout, encoding="utf-8")
     if r.returncode != 0:
         print(f"  [ERROR] exit code {r.returncode}")
     return r.returncode
@@ -152,6 +178,7 @@ def save_greens_outputs(greens_current: Path, dest: Path, image_name: str, keff:
         "VesselSources001.out",
         "GreensRes001.out",
         "summary.out",
+        "GreensLog.txt",
     ]
     for fname in files_to_save:
         src = greens_current / fname
@@ -234,7 +261,11 @@ def main():
             shutil.copy2(network_ready, netflow_network)
         print(f"  Copied network_ready.dat → {netflow_network}")
 
-        rc = run([args.netflow_exe], cwd=args.netflow_dir, dry_run=args.dry_run)
+        # Remove the previous image's outputs so a failed run cannot pass them on.
+        if not args.dry_run:
+            shutil.rmtree(args.netflow_dir / "Current", ignore_errors=True)
+        rc = run([args.netflow_exe], cwd=args.netflow_dir, dry_run=args.dry_run,
+                 log_path=None if args.dry_run else img_dir / "netflow_results" / "netflow_stdout.txt")
         if rc != 0:
             print(f"  [SKIP] NetFlowV2 failed for {image_name}")
             failed.append((image_name, "NetFlowV2"))
@@ -272,12 +303,15 @@ def main():
             if not args.dry_run:
                 make_intravascres(keff, intravascres_dst)
 
-            # Run GreensV4
-            rc = run([args.greens_exe], cwd=args.greens_dir, dry_run=args.dry_run)
+            # Run GreensV4 (clear the previous run's outputs first)
+            keff_str = f"Keff{keff:g}"
+            greens_out_dir = img_dir / "greens_results" / keff_str
+            if not args.dry_run:
+                shutil.rmtree(args.greens_dir / "Current", ignore_errors=True)
+            rc = run([args.greens_exe], cwd=args.greens_dir, dry_run=args.dry_run,
+                     log_path=None if args.dry_run else greens_out_dir / "greens_stdout.txt")
 
             # Save outputs
-            keff_str = f"Keff{int(keff)}"
-            greens_out_dir = img_dir / "greens_results" / keff_str
             if not args.dry_run:
                 greens_current = args.greens_dir / "Current"
                 save_greens_outputs(greens_current, greens_out_dir, image_name, keff)

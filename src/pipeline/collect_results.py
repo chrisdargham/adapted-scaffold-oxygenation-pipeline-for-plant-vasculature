@@ -22,7 +22,8 @@ pressure_mean_mmhg  float — mean nodal pressure
 pressure_sd_mmhg    float — pressure standard deviation
 velocity_median_mms float — median flow velocity (mm/s)
 velocity_p95_mms    float — 95th percentile velocity
-n_zero_flow_segs    int   — segments with Q=0 (type 0 after solver)
+n_zero_flow_segs    int   — active segments with Q exactly 0 in Results.out
+                            (segments NetFlowV2 sets to type 0 are not listed there)
 --- GreensV4 outputs ---
 tissue_po2_mean     float — mean tissue PO2 (mmHg)
 tissue_po2_sd       float — std dev of tissue PO2
@@ -32,7 +33,9 @@ frac_hypoxic_10     float — fraction of tissue points with PO2 < 10 mmHg
 frac_hypoxic_5      float — fraction of tissue points with PO2 < 5 mmHg
 vessel_po2_mean     float — mean intravascular PO2
 vessel_po2_min      float — minimum intravascular PO2
-greens_converged    int   — 1 if TissueLevels exists and valid, 0 otherwise
+greens_converged    int   — 1 if GreensV4 wrote tissue levels and its stdout has no
+                            "not converged" warning; 0 if it warned or wrote nothing;
+                            empty if greens_stdout.txt was not saved (older runs)
 
 USAGE
 -----
@@ -62,8 +65,14 @@ def build_parser():
 
 # ── Parsers ───────────────────────────────────────────────────────────────
 
-def parse_network_dat(path: Path) -> dict:
-    """Extract segment count, BC node count from network_ready.dat."""
+def parse_network_dat(path: Path, inlet_pressure: float = 40.0) -> dict:
+    """Extract segment count, BC node count from network_ready.dat.
+
+    Outlets are the pressure boundary nodes whose pressure differs from the inlet
+    pressure. (Fixed Nov 2026: the header line after "boundary nodes" switched the
+    boundary section off before any row was read, so 0 nodes were always counted,
+    and outlets were taken as anything within 2 mmHg of 35 mmHg, which misses the
+    May outlets at 39.9955 mmHg.)"""
     result = {"n_segments": 0, "n_bc_nodes": 0, "n_outlets": 0}
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
@@ -77,8 +86,8 @@ def parse_network_dat(path: Path) -> dict:
                 in_seg = False
             if "boundary nodes" in l.lower():
                 in_bc = True; continue
-            if "bctype" in l.lower():
-                in_bc = False; continue
+            if in_bc and "bctype" in l.lower():
+                continue                      # column header line, rows follow
             if in_seg:
                 p = l.split()
                 if len(p) >= 5:
@@ -91,9 +100,10 @@ def parse_network_dat(path: Path) -> dict:
                 if p:
                     try:
                         nid = int(p[0])
+                        bctype = int(p[1])
                         press = float(p[2])
                         result["n_bc_nodes"] += 1
-                        if abs(press - 35.0) < 2.0:   # outlet range
+                        if bctype == 0 and abs(press - inlet_pressure) > 1e-4:
                             result["n_outlets"] += 1
                     except: pass
     except Exception as e:
@@ -296,7 +306,7 @@ def main():
 
         # Network stats (from network_ready.dat)
         network_ready = img_dir / "netflow_input" / "network_ready.dat"
-        network_stats = parse_network_dat(network_ready) if network_ready.exists() else {}
+        network_stats = parse_network_dat(network_ready, args.inlet_pressure) if network_ready.exists() else {}
 
         # NetFlowV2 results
         results_out = img_dir / "netflow_results" / "Results.out"
@@ -345,6 +355,15 @@ def main():
                     keff_dir / "TissueLevels001.out", thresholds
                 )
                 vessel_stats = parse_vessel_levels(keff_dir / "VesselLevels001.out")
+                # GreensV4 writes TissueLevels001.out even when it stops at its
+                # iteration limit without converging, so check its own warning.
+                stdout_path = keff_dir / "greens_stdout.txt"
+                if not tissue_stats.get("greens_converged"):
+                    tissue_stats["greens_converged"] = 0
+                elif not stdout_path.exists():
+                    tissue_stats["greens_converged"] = None
+                elif "not converged" in stdout_path.read_text(errors="replace"):
+                    tissue_stats["greens_converged"] = 0
 
                 row = {
                     "image_name":         image_name,

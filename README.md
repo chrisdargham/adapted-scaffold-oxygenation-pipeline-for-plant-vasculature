@@ -81,8 +81,8 @@ conclusion (0% vs at least 89% of tissue at or above 15 mmHg for
 
 | Stage | Tool | Code | Can be rerun here |
 |---|---|---|---|
-| 1. Vein segmentation of a cleared-leaf image | LeafVeinCNN v2.14 (external) | settings only | no: the output was lost |
-| 2. `.mat` → NetFlowV2 network: resampling, diameters, boundary checks | own | `src/preprocessing/` | yes, on the synthetic leaf |
+| 1. Vein segmentation of a cleared-leaf image | LeafVeinCNN v2.14 (external) | settings only: `configs/leafveincnn_settings.json` | no: the output was lost |
+| 2. `.mat` → NetFlowV2 network: resampling, diameters, boundary checks, boundary pressures | own | `src/preprocessing/`; May record in `configs/leaf_ACJ01_may_preprocessing.json` | yes, on the synthetic leaf; the boundary-pressure step reproduces the kept May input |
 | 3. Pressure and flow | NetFlowV2 (Secomb lab) | `solvers/build_solvers.sh` | yes, real leaf |
 | 4. Green's-function tissue oxygen | GreensV4 (Secomb lab) + one-line patch | `src/analysis/greens_runs.py` | yes, real leaf |
 | 5. Oxygen screening on the vein mask | own (`oxy_sim_mat.py`) | `src/solver/` | yes, real leaf (rebuilt mask) |
@@ -96,7 +96,10 @@ results were lost. Two things survived and turned out to be enough:
   The input is the fully preprocessed network: 13,615 segments with
   coordinates and diameters. Rerunning NetFlowV2 on it reproduces the May
   output exactly, so the slow segmentation and preprocessing steps don't need
-  repeating.
+  repeating. The exact May preprocessing command was not saved;
+  `configs/leaf_ACJ01_may_preprocessing.json` lists what can be read back from
+  the file (75 µm resampling, 150 µm diameter cap, inlet node 1836, 44 outlets
+  at 39.9955 mmHg) and what is unknown.
 - The GreensV4 input file and log (`data/leaf_ACJ01/greensv4_may/`).
 
 `src/reconstruct/network_to_mat.py` draws the network back onto a pixel grid at
@@ -113,6 +116,8 @@ pip install -r requirements.txt
 bash solvers/build_solvers.sh        # downloads and compiles NetFlowV2 and GreensV4 (30 s)
 bash run_demo.sh                     # synthetic .mat -> preprocessing -> NetFlowV2 -> oxygen solver
 python tests/test_set_po2.py
+python tests/test_patch_boundary_pressures.py
+python tests/test_krogh_validation.py
 ```
 
 ## Reproduce the real-leaf results
@@ -137,19 +142,22 @@ The analysis report renders on GitHub:
 
 ```text
 src/
-  preprocessing/   leafveincnn_to_netflow.py, prepare_network.py   (.mat -> NetFlowV2 network)
+  preprocessing/   leafveincnn_to_netflow.py, prepare_network.py,  (.mat -> NetFlowV2 network)
+                   patch_netflow_boundary_pressures.py             (sets the May boundary pressures)
   pipeline/        run_pipeline.py, collect_results.py             (cohort runner, results table)
-  solver/          oxy_sim_mat.py, o2_sweep.py, patches/            (oxygen screening solver and sweep)
+  solver/          oxy_sim_mat.py, o2_sweep.py, patches/,           (oxygen screening solver and sweep)
+                   krogh_validation.py                             (slab/Krogh references for "verify": true)
   reconstruct/     network_to_mat.py                               (network -> pixel mask)
   analysis/        network_io.py and the scripts for each finding
   demo/            make_synthetic_mat.py
 solvers/           build_solvers.sh, patches/                      (NetFlowV2, GreensV4 at pinned commits)
-configs/           solver settings (May settings, demo, GreensV4)
+configs/           LeafVeinCNN settings, May preprocessing record, solver settings (May, demo, GreensV4)
 data/leaf_ACJ01/   files kept from the May runs, May sweep report values
 results/leaf_ACJ01/  tables and figures behind every number in this README
 analysis/          oxygen_sweep_analysis.Rmd and its rendered .md/.html
 docs/              May manuscript and slides (as submitted), errata.md
-tests/             test_set_po2.py
+tests/             test_set_po2.py, test_patch_boundary_pressures.py, test_krogh_validation.py
+archive/           netflow_oxysim_attempt/: scripts written but not used for any result (see its README)
 ```
 
 ## Claim boundary
